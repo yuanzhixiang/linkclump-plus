@@ -672,11 +672,34 @@ function detect(x: number, y: number, open: boolean) {
 	window.count_label.innerText = count_tabs.size.toString();
 
 	if (open_tabs.length > 0) {
-		chrome.runtime.sendMessage({
-			message: "activate",
-			urls: open_tabs,
-			setting: window.settings[window.setting]
-		} as ActivateMessage);
+		// 改成直接使用 window.open 后台打开新标签页
+		for (const tab of open_tabs) {
+			// 创建隐藏的 a 标签来打开链接，避免焦点跳转
+			const a = document.createElement('a');
+			a.href = tab.url;
+			a.target = '_blank';
+			a.rel = 'noopener noreferrer';
+			a.style.display = 'none';
+			document.body.appendChild(a);
+
+			// 使用 Ctrl/Cmd + Click 模拟后台打开
+			const evt = new MouseEvent('click', {
+				bubbles: true,
+				cancelable: true,
+				view: window,
+				ctrlKey: true,  // Windows/Linux 后台打开
+				metaKey: true   // Mac 后台打开
+			});
+			a.dispatchEvent(evt);
+
+			// 清理
+			document.body.removeChild(a);
+		}
+		// chrome.runtime.sendMessage({
+		// 	message: "activate",
+		// 	urls: open_tabs,
+		// 	setting: window.settings[window.setting]
+		// } as ActivateMessage);
 	}
 
 	return true;
